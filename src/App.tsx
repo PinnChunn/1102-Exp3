@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import Benefits from './components/Benefits';
 import EventCard from './components/EventCard';
@@ -7,6 +7,7 @@ import SkillPaths from './components/SkillPaths';
 import UserProfile from './components/UserProfile';
 import Footer from './components/Footer';
 import PaymentModal from './components/PaymentModal';
+import { getCurrentUser } from './lib/auth';
 
 const FEATURED_EVENTS = [
   {
@@ -43,12 +44,31 @@ const FEATURED_EVENTS = [
   }
 ];
 
+interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+  avatar: string | null;
+}
+
 export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [pendingEventIndex, setPendingEventIndex] = useState<number | null>(null);
   const [registeredEvents, setRegisteredEvents] = useState<number[]>([]);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setUser(user);
+        setIsAuthenticated(true);
+      }
+    };
+    initAuth();
+  }, []);
 
   const handleEventRegistration = (index: number) => {
     const event = FEATURED_EVENTS[index];
@@ -103,7 +123,11 @@ export default function App() {
             <UserProfile 
               isAuthenticated={isAuthenticated}
               onLogin={() => setIsAuthModalOpen(true)}
-              onLogout={() => setIsAuthenticated(false)}
+              onLogout={() => {
+                setIsAuthenticated(false);
+                setUser(null);
+              }}
+              user={user}
             />
           </div>
         </div>
